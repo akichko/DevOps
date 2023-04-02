@@ -1,0 +1,1 @@
+dotnet /workspace/app/publish/dotnetWebApi.dll --urls=http://0.0.0.0:80

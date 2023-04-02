@@ -1,0 +1,74 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-debug",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"${workspaceFolder}/dotnetWebApi.csproj",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"problemMatcher": "$msCompile",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "build-release",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"${workspaceFolder}/dotnetWebApi.csproj",
+				"-c",
+				"Release",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "publish-debug",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"publish",
+				"${workspaceFolder}/dotnetWebApi.csproj",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "publish-release",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"publish",
+				"${workspaceFolder}/dotnetWebApi.csproj",
+				"-c",
+				"Release",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "watch-debug",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"watch",
+				"run",
+				"--project",
+				"${workspaceFolder}/dotnetWebApi.csproj"
+			],
+			"problemMatcher": "$msCompile"
+		}
+	]
+  }
+  

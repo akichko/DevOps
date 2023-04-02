@@ -1,0 +1,5 @@
+dotnetWebApi/bin/
+dotnetWebApi/obj/
+uploaded/*
+!uploaded/.gitkeep
+app/publish
