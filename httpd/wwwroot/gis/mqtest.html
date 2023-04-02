@@ -1,0 +1,445 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"
+      type="text/javascript"
+    ></script>
+
+    <style>
+      .btn-success {
+        background-color: lime;
+        color: darkgreen;
+      }
+      .btn-secondary {
+        background-color: darkgray;
+      }
+    </style>
+    <!-- MQTT -->
+    <script type="text/javascript">
+      // MQTT connection variables
+      var host;
+      var port;
+      var client;
+      var connected = false;
+      var subscribed = false;
+
+      function connect() {
+        host = document.getElementById("host").value;
+        port = document.getElementById("port").value;
+        if (!connected) {
+          // Create a new MQTT client
+          client = new Paho.MQTT.Client(
+            host,
+            Number(port),
+            "clientId_" + parseInt(Math.random() * 100, 10)
+          );
+
+          // Set callback handlers
+          client.onConnectionLost = onConnectionLost;
+          client.onMessageArrived = onMessageArrived;
+
+          // Connect to MQTT broker
+          client.connect({ onSuccess: onConnect });
+
+          //document.getElementById("connect").style.backgroundColor = "lime";
+          document.getElementById("btnConnect").className = "btn btn-success";
+          document.getElementById("btnSubscribe").className =
+            "btn btn-outline-success";
+          document.getElementById("btnPublish").className =
+            "btn btn-outline-success";
+          connected = true;
+        } else {
+          if (subscribed) {
+            subscribe();
+          }
+          client.disconnect();
+          //document.getElementById("connect").style.backgroundColor = "gray";
+          document.getElementById("btnConnect").className = "btn btn-secondary";
+          document.getElementById("btnPublish").className = "btn btn-secondary";
+          document.getElementById("btnSubscribe").className =
+            "btn btn-secondary";
+          connected = false;
+        }
+      }
+
+      function subscribe() {
+        if (!connected) {
+          return;
+        }
+        var topic = document.getElementById("subscribe-topic").value;
+        if (!subscribed) {
+          client.subscribe(topic);
+          //document.getElementById("subscribe").style.backgroundColor = "lime";
+          document.getElementById("btnSubscribe").className = "btn btn-success";
+          subscribed = true;
+        } else {
+          client.unsubscribe(topic);
+          //document.getElementById("subscribe").style.backgroundColor = "gray";
+          document.getElementById("btnSubscribe").className =
+            "btn btn-outline-success";
+          subscribed = false;
+        }
+      }
+
+      // Called when the client connects
+      function onConnect() {
+        console.log("Connected");
+      }
+
+      // Called when the connection is lost
+      function onConnectionLost(responseObject) {
+        if (responseObject.errorCode !== 0) {
+          console.log("onConnectionLost:" + responseObject.errorMessage);
+        }
+      }
+
+      // Called when a message arrives
+      function onMessageArrived(message) {
+        console.log("onMessageArrived:" + message.payloadString);
+        var textBox = document.getElementById("received-message");
+        textBox.value = message.payloadString;
+        var point = parseGeoJSONPoint(message.payloadString);
+        if (point != null) {
+          addPoint(point.id, point.latitude, point.longitude);
+          renderPointsTable();
+          addMarker(point.id, point.latitude, point.longitude);
+          //追跡対象IDであれば地図移動
+          if (point.id == trackingId) {
+            mymap.setView([point.latitude, point.longitude]);
+          }
+        }
+
+        document.getElementById("subscribe-topic").style.backgroundColor =
+          "lime";
+        setTimeout(function () {
+          document.getElementById("subscribe-topic").style.backgroundColor = "";
+        }, 100);
+      }
+
+      function publish() {
+        var topic = document.getElementById("publish-topic").value;
+        var message = document.getElementById("publish-message").value;
+        client.send(topic, message);
+        document.getElementById("publish-topic").style.backgroundColor = "lime";
+        setTimeout(function () {
+          document.getElementById("publish-topic").style.backgroundColor = "";
+        }, 100);
+      }
+    </script>
+
+    <!-- データ管理 -->
+    <script type="text/javascript">
+      const points = {};
+      var trackingId;
+
+      function addPoint(id, latitude, longitude) {
+        points[id] = {
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+        };
+      }
+
+      function removePoint(id) {
+        delete points[id];
+      }
+
+      function getPoints() {
+        return points;
+      }
+
+      function parseGeoJSONPoint(geojson) {
+        try {
+          const feature = JSON.parse(geojson);
+          return {
+            id: feature.properties.id,
+            latitude: feature.geometry.coordinates[1],
+            longitude: feature.geometry.coordinates[0],
+          };
+        } catch (error) {
+          console.error("Invalid GeoJSON:", error);
+          return null;
+        }
+      }
+
+      function createGeoJsonPoint(latitude, longitude, id) {
+        const point = {
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [parseFloat(longitude.toFixed(6)), parseFloat(latitude.toFixed(6))]
+          },
+          properties: {
+            id: id,
+          },
+        };
+
+        try {
+          const geojson = JSON.stringify(point);
+          return geojson;
+        } catch (error) {
+          console.error("Failed to create GeoJSON point:", error);
+          return null;
+        }
+      }
+
+      function renderPointsTable() {
+        const pointsArray = Object.values(getPoints());
+        let tableHTML =
+          "<table><tr><th>ID</th><th>緯度</th><th>経度</th><th>追跡</th><th>削除</th></tr>";
+        Object.entries(points).forEach(([id, point]) => {
+          tableHTML += `<tr><td>${id}</td><td>${point.latitude}</td><td>${
+            point.longitude
+          }</td><td><button class="btn btn-rounded btn-sm ${
+            trackingId === id ? "btn-success" : "btn-outline-success"
+          }" onclick="movePosition('${id}',${point.latitude},${
+            point.longitude
+          })">追跡</button></td><td>
+			<button class="btn btn-outline-danger btn-rounded btn-sm" onclick="deletePosition('${id}')">
+			×</button></td></tr>`;
+        });
+        tableHTML += "</table>";
+        document.getElementById("table-container").innerHTML = tableHTML;
+      }
+
+      window.onload = function () {
+        //addPoint("123", 40.7, -74.0);
+        //addPoint("456", 41.0, -75.0);
+        //addPoint("abc", 1.0, -7.0);
+        renderPointsTable();
+      };
+
+      function movePosition(id, lat, lon) {
+        if (trackingId == id) {
+          trackingId = null;
+          renderPointsTable();
+          setMarkerColor(id, "blue");
+        } else {
+          setMarkerColor(trackingId, "blue");
+          mymap.setView([lat, lon]);
+          trackingId = id;
+          renderPointsTable();
+          setMarkerColor(id, "green");
+        }
+      }
+
+      function deletePosition(id, lat, lon) {
+        delMarker(id);
+        removePoint(id);
+        renderPointsTable();
+      }
+    </script>
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      crossorigin=""
+    ></script>
+    <script src="leaflet.sprite.js"></script>
+    <link rel="stylesheet" href="leaflet.contextmenu.css" />
+    <script src="leaflet.contextmenu.js" type="text/javascript"></script>
+  </head>
+
+  <!-- BODY -->
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- 上メニュー -->
+        <div class="col-12 p-0 mb-1">
+          <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">MQTT GIS Test</a>
+          </nav>
+        </div>
+
+        <!-- 左メニュー -->
+        <div class="col-3">
+          <div class="form-group d-flex align-items-center">
+            <button
+              class="btn btn-secondary"
+              id="btnConnect"
+              onclick="connect()"
+            >
+              Connect
+            </button>
+            <div class="form-group">
+              <input
+                type="text"
+                class="form-control"
+                id="host"
+                value="localhost"
+              />
+              <input type="text" class="form-control" id="port" value="9001" />
+            </div>
+          </div>
+
+          <div class="form-group d-flex align-items-center">
+            <button
+              class="btn btn-secondary"
+              id="btnSubscribe"
+              onclick="subscribe()"
+            >
+              Subscribe
+            </button>
+            <div class="ml-3">
+              <input
+                type="text"
+                class="form-control"
+                id="subscribe-topic"
+                value="#"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="received-message">Received Message:</label>
+            <textarea
+              class="form-control"
+              id="received-message"
+              rows="5"
+            ></textarea>
+          </div>
+
+          <div class="form-group d-flex align-items-center">
+            <button
+              class="btn btn-secondary"
+              id="btnPublish"
+              onclick="publish()"
+            >
+              Publish
+            </button>
+            <div class="ml-3">
+              <input
+                type="text"
+                class="form-control"
+                id="publish-topic"
+                value="sys1/app2/api/command"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="publish-message">Publish Message:</label>
+            <textarea
+              class="form-control"
+              id="publish-message"
+              rows="5"
+            ></textarea>
+          </div>
+
+          <!-- データ管理テーブル -->
+          <div id="table-container"></div>
+        </div>
+
+        <!-- 右コンテンツ(地図) -->
+        <div class="col-9 right-content">
+          <div id="mapid" style="height: calc(100vh - 60px)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+      integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+      integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Map -->
+    <script type="text/javascript">
+      // mapidと名の付いたdiv要素に地図を作成し，視点を設定
+      var mymap = L.map("mapid", {
+        // 右クリックメニューの登録
+        contextmenu: true,
+        contextmenuItems: [
+          { text: "座標取得A",
+            callback: function (e) {
+              var geoJsonPoint = createGeoJsonPoint(e.latlng.lat, e.latlng.lng, "A");
+              navigator.clipboard.writeText(
+                //e.latlng.lat.toString() + ", " + e.latlng.lng.toString()
+                geoJsonPoint
+              );
+            }
+          },
+          {
+            text: "座標取得B",
+            callback: function (e) {
+              var geoJsonPoint = createGeoJsonPoint(e.latlng.lat, e.latlng.lng, "B");
+              navigator.clipboard.writeText(
+                //e.latlng.lat.toString() + ", " + e.latlng.lng.toString()
+                geoJsonPoint
+              );
+            }
+          },
+        ],
+      }).setView([35.465991, 139.622637], 16);
+
+      // leaflet.sprite
+      L.Icon.Default.imagePath = "https://unpkg.com/leaflet@1.5.1/dist/images/";
+
+      // OpenStreetMapのタイルレイヤーを作る
+      tileLayer = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution:
+            '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+          maxZoom: 19,
+        }
+      ).addTo(mymap);
+
+      function eventSetOrigin(e) {
+        setOrigin(e.latlng.lat, e.latlng.lng);
+      }
+
+      function eventSetDestination(e) {
+        setDestination(e.latlng.lat, e.latlng.lng);
+      }
+
+      var markers = {};
+
+      function addMarker(id, latitude, longitude) {
+        if (id in markers) {
+          markers[id].setLatLng([latitude, longitude]);
+        } else {
+          markers[id] = L.marker([latitude, longitude]).addTo(mymap);
+        }
+      }
+
+      function delMarker(id) {
+        if (id in markers) {
+          mymap.removeLayer(markers[id]);
+          delete markers[id];
+        }
+      }
+
+      //"green", "blue", "orange", "yellow", "red", "purple", "violet"
+      function setMarkerColor(id, color) {
+        if (id in markers) {
+          markers[id].setIcon(L.spriteIcon(color));
+        }
+      }
+    </script>
+  </body>
+</html>
