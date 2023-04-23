@@ -59,6 +59,20 @@ services:
       devops_nw_front:
         ipv4_address: 172.31.0.4
 
+  jupyterlab:
+    build: ./jupyterlab/
+    container_name: jupyterlab
+    working_dir: /work
+    volumes:
+      - ./jupyterlab/work:/work
+    ports:
+      - "8888:8888"
+    command:
+      jupyter-lab --ip 0.0.0.0 --allow-root -b localhost
+    networks:
+      devops_nw_back:
+        ipv4_address: 172.32.1.10
+ 
 networks:
   devops_nw_front:
     driver: bridge
