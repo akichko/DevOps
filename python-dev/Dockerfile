@@ -15,7 +15,12 @@ RUN useradd guest -m -s /bin/bash \
         mecab-ipadic-utf8 \
         fonts-ipaexfont-gothic \
     && pip install --upgrade pip \
-    && python -m pip install jupyterlab \
+    && python -m pip install \
+        jupyterlab \
+        Flask \
+        flask_sqlalchemy \
+        flask-login \
+        flask-bootstrap4 \
         numpy \
         pandas \
         matplotlib \

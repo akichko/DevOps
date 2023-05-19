@@ -1,16 +1,16 @@
 version: '3'
 services:
 
-  httpd:
-    build: ./httpd/
-    container_name: httpd
+  nginx:
+    build: ./nginx/
+    #container_name: nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./httpd/wwwroot:/var/www/html
-      - ./httpd/nginx.conf:/etc/nginx/nginx.conf
-      #- ./httpd/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/wwwroot:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      #- ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     #command: nginx -g daemon off
     networks:
       devops_nw_front:
@@ -59,14 +59,17 @@ services:
       devops_nw_front:
         ipv4_address: 172.31.0.4
 
-  jupyterlab:
-    build: ./jupyterlab/
-    container_name: jupyterlab
-    working_dir: /work
+  python-dev:
+    build: ./python-dev/
+    container_name: python-dev
+    working_dir: /jupyterlab
     volumes:
-      - ./jupyterlab/work:/work
+      - ./python-dev/jupyterlab:/jupyterlab:rw
+      - ./python-dev/workspace:/workspace:rw
     ports:
       - "8888:8888"
+      - "5180:80"
+      - "5122:22"
     command:
       jupyter-lab --ip 0.0.0.0 --allow-root -b localhost
     networks:
