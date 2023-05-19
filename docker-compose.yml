@@ -3,7 +3,7 @@ services:
 
   nginx:
     build: ./nginx/
-    #container_name: nginx
+    container_name: nginx
     ports:
       - "80:80"
       - "443:443"
@@ -58,6 +58,23 @@ services:
     networks:
       devops_nw_front:
         ipv4_address: 172.31.0.4
+
+  #forward-proxy
+  fproxy:
+    build: ./httpd/
+    container_name: fproxy
+    ports:
+      - "1080:80"
+      - "8080:8080"
+      - "8443:443"
+    volumes:
+      - ./httpd/data:/data
+    command: httpd -f /data/httpd.conf -D FOREGROUND
+    networks:
+      devops_nw_front:
+        ipv4_address: 172.31.0.8
+      devops_nw_back:
+        ipv4_address: 172.32.0.8
 
   python-dev:
     build: ./python-dev/
