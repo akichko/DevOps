@@ -1,0 +1,51 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+{% include 'navbar.html' %}
+
+<div class="container-fluid h-100">
+	<div class="row justify-content-center align-items-center h-100">
+		<div class="col-md-6 col-sm-12">
+			<div class="card chat-card">
+				<div class="card-header">
+					<div class="row">
+						<div class="col-3 text-center">
+							<img class="chat-header-img" src="{{ url_for('static', filename='img/profile.png') }}">
+						</div>
+						<div class="col-9">
+							<div class="row">
+								<h5 class="chat-header-text">GPT-2 チャットボット</h5>
+							</div>
+							<div class="row">
+								<p class="chat-header-text">Online</p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="card-body chat-card-body" id="chat-body">
+					<ul class="list-unstyled" id="chat-list">
+					</ul>
+				</div>
+				<div class="card-footer chat-card-footer">
+					<form class="row g-3" id="chat-form" method="post">
+						<div class="col-9">
+							<input type="text" class="form-control" placeholder="メッセージを入力" id="chat-input"
+								name="input_text" autocomplete="off">
+						</div>
+						<div class="col-3">
+							<button type="submit" class="btn btn-primary btn-block">送信</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sample.css') }}">
+
+{% endblock %}

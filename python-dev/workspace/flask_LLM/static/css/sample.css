@@ -1,0 +1,30 @@
+.chat-right {
+	text-align: right;
+	margin-left: 100px;
+}
+
+.chat-left {
+	text-align: left;
+	padding-right: 100px;
+}
+
+.chat-bubble {
+    background-color: #007bff;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+#chat-body {
+	max-height: 500px;
+	overflow-y: scroll;
+}
+
+.chat-header-img {
+	width: 50px;
+	height: 50px;
+}
+.chat-header-img {
+	width: 50px;
+	height: 50px;
+}

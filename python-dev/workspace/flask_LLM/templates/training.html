@@ -1,0 +1,24 @@
+{% extends "bootstrap/base.html" %}
+
+{% block title %}GPT-2ファインチューニング{% endblock %}
+
+{% block content %}
+
+{% include 'navbar.html' %}
+
+<div class="container">
+    <h1 class="my-4">ファインチューニング用データ入力</h1>
+    <form method="POST" action="/text">
+        <div class="form-group">
+            <label for="text">学習させる文章</label>
+            <input type="text" class="form-control" name="text" required>
+        </div>
+        <button type="submit" class="btn btn-primary">送信</button>
+    </form>
+    <hr>
+    <div class="form-group">
+        <label for="textData">学習用テキスト</label>
+        <textarea class="form-control" rows="10" readonly>{{ text_data }}</textarea>
+    </div>
+</div>
+{% endblock %}

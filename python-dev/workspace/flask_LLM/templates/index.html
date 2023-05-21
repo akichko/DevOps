@@ -1,0 +1,22 @@
+{% extends "bootstrap/base.html" %}
+
+{% block title %}GPT-2メニュー{% endblock %}
+
+{% block content %}
+
+{% include 'navbar.html' %}
+
+<div class="container">
+  <h1 class="text-center">GPT-2メニュー</h1>
+  <ul class="list-group">
+    <a href="{{ url_for('chat') }}" class="list-group-item list-group-item-action">AIと会話する</a>
+    <a href="{{ url_for('apitest') }}" class="list-group-item list-group-item-action">文字列生成テスト</a>
+    <a href="{{ url_for('training') }}" class="list-group-item list-group-item-action">学習用データ作成</a>
+    <a href="{{ url_for('finetune') }}" class="list-group-item list-group-item-action">ファインチューニング</a>
+    <a href="{{ url_for('debug') }}" class="list-group-item list-group-item-action">デバッグ</a>
+  </ul>
+  
+  <h2 class="text-center">{{ messate_text }}</h1>
+
+</div>
+{% endblock %}

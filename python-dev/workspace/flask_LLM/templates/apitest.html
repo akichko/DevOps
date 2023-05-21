@@ -1,0 +1,58 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+{% include 'navbar.html' %}
+
+<div class="container mt-5">
+	<h1>APIテスト</h1>
+	<form action="/api/gpt" method="post">
+		<div class="form-group">
+		  <label for="input_text">入力テキスト:</label>
+		  <input type="text" id="input_text" name="input_text" class="form-control" required>
+		</div>
+		<div class="form-group row">
+		  <div class="col-sm-8">
+			<label for="data_num">データ数:</label>
+			<input type="number" id="data_num" name="data_num" class="form-control" min="1" max="10" value="1" required>
+		  </div>
+		  <div class="col-sm-4">
+			<label for="submit-btn"></label>
+			<button type="submit" class="btn btn-primary form-control" id="submit-btn">送信</button>
+		  </div>
+		</div>
+	  </form>
+	<hr>
+	<div class="my-4">
+		<h2>生成結果</h2>
+		<textarea id="generated_text" rows="20" class="form-control" readonly></textarea>
+	</div>
+</div>
+
+
+<script>
+	var form = document.querySelector('form');
+	var generatedText = document.getElementById('generated_text');
+
+	form.addEventListener('submit', function (e) {
+		e.preventDefault();
+
+		var inputText = document.getElementById('input_text').value;
+		var dataNum = document.getElementById('data_num').value;
+
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+				var response = JSON.parse(xhr.responseText);
+				var generated = response.message.full;
+				generatedText.value = generated.map((text, index) => `${index+1}. ${text}`).join('\n\n');
+			} else {
+				console.log("Error: " + xhr.status);
+			}
+		};
+		xhr.open("POST", "/api/gpt");
+		xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+		xhr.send("input_text=" + encodeURIComponent(inputText) + "&data_num=" + encodeURIComponent(dataNum));
+	});
+</script>
+{% endblock %}

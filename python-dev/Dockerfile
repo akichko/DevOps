@@ -39,5 +39,6 @@ RUN useradd guest -m -s /bin/bash \
         transformers \
         sentencepiece \
         torch \
-        ipywidgets
+        ipywidgets \
+        accelerate
 

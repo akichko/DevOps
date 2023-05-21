@@ -1,0 +1,20 @@
+{% extends "bootstrap/base.html" %}
+
+{% block title %}GPT-2ファインチューニング{% endblock %}
+
+{% block content %}
+
+{% include 'navbar.html' %}
+
+<div class="container">
+    <h1 class="my-4">ファインチューニング</h1>
+    <form method="POST" action="/finetune">
+        <button type="submit" class="btn btn-primary">学習開始</button>
+    </form>
+    <hr>
+    <div class="form-group">
+        <label for="textData">学習用テキスト</label>
+        <textarea class="form-control" rows="10" readonly>{{ text_data }}</textarea>
+    </div>
+</div>
+{% endblock %}
